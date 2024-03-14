@@ -1,0 +1,775 @@
+Program.Sub.ScreenSU.Start
+Gui.F_RouterImport..Create
+Gui.F_RouterImport..Size(16155,11400)
+Gui.F_RouterImport..MinX(0)
+Gui.F_RouterImport..MinY(0)
+Gui.F_RouterImport..Position(0,0)
+Gui.F_RouterImport..BackColor(-2147483633)
+Gui.F_RouterImport..MousePointer(0)
+Gui.F_RouterImport..Caption("Router Import")
+Gui.F_RouterImport..Event(UnLoad,F_RouterImport_UnLoad)
+Gui.F_RouterImport.frmGrid.Create(Frame)
+Gui.F_RouterImport.frmGrid.Size(10785,10080)
+Gui.F_RouterImport.frmGrid.Position(5055,585)
+Gui.F_RouterImport.GsGcRouter.Create(GsGridControl)
+Gui.F_RouterImport.GsGcRouter.Size(10605,9780)
+Gui.F_RouterImport.GsGcRouter.Position(90,165)
+Gui.F_RouterImport.GsGcRouter.Parent("frmGrid")
+Gui.F_RouterImport.GsGcRouter.Event(RowCellClick,GsGcRouter_RowCellClick)
+Gui.F_RouterImport.cmdRefresh.Create(Button)
+Gui.F_RouterImport.cmdRefresh.Size(495,375)
+Gui.F_RouterImport.cmdRefresh.Position(4440,7950)
+Gui.F_RouterImport.cmdRefresh.Caption("Refresh")
+Gui.F_RouterImport.cmdRefresh.Event(Click,cmdRefresh_Click)
+Gui.F_RouterImport.lbl1.Create(Label,"Import Folder:",True,1110,255,0,75,195,True,0,"Arial",8,-2147483633,0)
+Gui.F_RouterImport.cmdImportBrw.Create(Button)
+Gui.F_RouterImport.cmdImportBrw.Size(435,375)
+Gui.F_RouterImport.cmdImportBrw.Position(4905,60)
+Gui.F_RouterImport.cmdImportBrw.Caption("^")
+Gui.F_RouterImport.cmdImportBrw.Event(Click,cmdImportBrw_Click)
+Gui.F_RouterImport.txtImportFolder.Create(TextBox,"",True,3615,300,0,1230,105,True,0,"Arial",8,-2147483643,1)
+Gui.F_RouterImport.cmdSaveImport.Create(Button)
+Gui.F_RouterImport.cmdSaveImport.Size(855,375)
+Gui.F_RouterImport.cmdSaveImport.Position(5385,60)
+Gui.F_RouterImport.cmdSaveImport.Caption("Save")
+Gui.F_RouterImport.cmdSaveImport.Event(Click,cmdSaveImport_Click)
+Gui.F_RouterImport.frmRouterNames.Create(Frame)
+Gui.F_RouterImport.frmRouterNames.Size(4875,7275)
+Gui.F_RouterImport.frmRouterNames.Position(90,600)
+Gui.F_RouterImport.optImport.Create(Option)
+Gui.F_RouterImport.optImport.Size(1590,255)
+Gui.F_RouterImport.optImport.Position(90,150)
+Gui.F_RouterImport.optImport.Caption("Ready to Import")
+Gui.F_RouterImport.optImport.Parent("frmRouterNames")
+Gui.F_RouterImport.optImport.Event(Click,optImport_Click)
+Gui.F_RouterImport.optShow.Create(Option)
+Gui.F_RouterImport.optShow.Size(1500,255)
+Gui.F_RouterImport.optShow.Position(3285,150)
+Gui.F_RouterImport.optShow.Caption("Show Imported")
+Gui.F_RouterImport.optShow.Parent("frmRouterNames")
+Gui.F_RouterImport.optShow.Event(Click,optShow_Click)
+Gui.F_RouterImport.GsGcRouterNames.Create(GsGridControl)
+Gui.F_RouterImport.GsGcRouterNames.Size(4740,6720)
+Gui.F_RouterImport.GsGcRouterNames.Position(60,465)
+Gui.F_RouterImport.GsGcRouterNames.Parent("frmRouterNames")
+Gui.F_RouterImport.GsGcRouterNames.Event(RowCellClick,GsGcRouterNames_RowCellClick)
+Gui.F_RouterImport.cmdCreateSingleRouter.Create(Button)
+Gui.F_RouterImport.cmdCreateSingleRouter.Size(1230,375)
+Gui.F_RouterImport.cmdCreateSingleRouter.Position(14550,75)
+Gui.F_RouterImport.cmdCreateSingleRouter.Caption("Create Router")
+Gui.F_RouterImport.cmdCreateSingleRouter.Event(Click,cmdCreateSingleRouter_Click)
+Gui.F_RouterImport.cmdCreateAllRouters.Create(Button)
+Gui.F_RouterImport.cmdCreateAllRouters.Size(1950,375)
+Gui.F_RouterImport.cmdCreateAllRouters.Position(90,7965)
+Gui.F_RouterImport.cmdCreateAllRouters.Caption("Create All Routers")
+Gui.F_RouterImport.cmdCreateAllRouters.Event(Click,cmdCreateAllRouters_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.External.Include.Library("6021.lib")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+f.Intrinsic.Control.CallSub(checkCustomFolder)
+f.Intrinsic.Control.CallSub(createEmptyDts)
+f.Intrinsic.Control.CallSub(loadGridProperties)
+f.Intrinsic.Control.CallSub(getFiles)
+f.Intrinsic.Control.CallSub(refreshDTs)
+gui.F_RouterImport.optImport.Value(1)
+gui.F_RouterImport..Show
+
+Program.Sub.Main.End
+
+Program.Sub.ErrorMsg.Start
+v.Local.sError.Declare
+
+'Closes ODBC connection, default to connection : "con"
+'f.Intrinsic.Control.If(v.ODBC!con.State, =, 1)
+'	f.ODBC.Connection!con.Close
+'f.Intrinsic.Control.EndIf
+
+'Generic Error message.
+f.Intrinsic.String.Build("Project ProjectName.g2u {0}{0}Subroutine: {1}{0}Error: {2} with Description: {3}", v.Ambient.NewLine, v.Args.CurrentSub, v.Ambient.ErrorNumber, v.Ambient.ErrorDescription, v.Local.sError)
+f.Intrinsic.UI.Msgbox(v.Local.sError)
+Program.Sub.ErrorMsg.End
+
+Program.Sub.loadIcon.Start
+f.Intrinsic.Control.CallSub(LoadIcon)
+v.Local.sIcon.Declare
+'sets the icon
+f.Intrinsic.String.Build("{0}\ART\gss2.ico", v.Caller.GlobalDir, v.Local.sIcon)
+gui.F_RouterImport..Icon(v.Local.sIcon)
+Program.Sub.loadIcon.End
+
+Program.Sub.checkCustomFolder.Start
+v.Local.sFolder.Declare
+v.Local.sFile.Declare
+v.Local.sText.Declare
+v.Local.bExists.Declare
+f.Intrinsic.Control.Try
+	f.Intrinsic.String.Build("{0}\CUSTOM\GCG_5626\", v.Caller.GlobalDir, v.Local.sFolder)
+	f.Intrinsic.File.DirExists(v.Local.sFolder, v.Local.bExists)
+	f.Intrinsic.Control.If(v.Local.bExists.Not)
+		f.Intrinsic.File.CreateDir(v.Local.sFolder)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.String.Build("{0}ImportFolder.txt", v.Local.sFolder, v.Local.sFile)
+	f.Intrinsic.File.Exists(v.Local.sFile, v.Local.bExists)
+	f.Intrinsic.Control.If(v.Local.bExists)
+		f.Intrinsic.File.File2String(v.Local.sFile, v.Local.sText)
+		gui.F_RouterImport.txtImportFolder.Text(v.Local.sText.Trim)
+	f.Intrinsic.Control.EndIf	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.checkCustomFolder.End
+
+Program.Sub.createEmptyDts.Start
+f.Intrinsic.Control.Try
+	'f.Data.DataTable.Create("routerDisplayDT", true)
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Data.DataTable.CreateFromSQL("routerDisplayDT", "con", "select * from GCG_5626_Router_Imp", true)
+	f.ODBC.Connection!con.Close
+	
+	'f.Data.DataTable.AddColumn("routerDisplayDT", "uploadCMD", "String", "UPLOAD")
+		
+	f.Data.DataView.Create("routerDisplayDT", "routerDisplayDV", 22, "routerName = '-1'", "")
+	f.Data.DataView.Create("routerDisplayDT", "routerCheck", 22, "uploadCheck", "")
+	
+	gui.F_RouterImport.GsGcRouter.AddGridviewFromDataview("routerDisplayGV", "routerDisplayDT", "routerDisplayDV")
+	gui.F_RouterImport.GsGcRouter.MainView("routerDisplayGV")
+		
+	'
+	f.Data.DataTable.Create("logErrorsDT", true)
+	f.Data.DataTable.AddColumn("logErrorsDT", "routerName", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "routerDescription", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "routerWeight", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "lineType", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "partNumber", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "workCenter", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "lineDescription", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "materialWeight", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "qtyRuntime", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "uploadUser", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "uploadDate", "String")
+	f.Data.DataTable.AddColumn("logErrorsDT", "uploadCheck", "Bit", false)
+	
+	'
+	f.Data.DataTable.Create("routerNameDisplayDT", true)
+	f.Data.DataTable.AddColumn("routerNameDisplayDT", "routerName", "String")
+	f.Data.DataTable.AddColumn("routerNameDisplayDT", "routerDescription", "String")
+	f.Data.DataTable.AddColumn("routerNameDisplayDT", "deleteCMD", "String")
+	f.Data.DataTable.AddColumn("routerNameDisplayDT", "uploadCheck", "Bit", false)
+	
+	f.Data.DataView.Create("routerNameDisplayDT", "routerNameDisplayDV", 22, "uploadCheck = 'False'", "")
+
+	gui.F_RouterImport.GsGcRouterNames.AddGridviewFromDataview("routerNameDisplayGV", "routerNameDisplayDT", "routerNameDisplayDV")
+	gui.F_RouterImport.GsGcRouterNames.MainView("routerNameDisplayGV")
+	
+	'
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Data.DataTable.CreateFromSQL("routerImportDT", "con", "select * from GCG_5626_Router_Imp where uploadCheck = '0'", true)
+	f.ODBC.Connection!con.Close
+	
+'	f.Data.DataTable.Create("routerImportDT", true)
+'	f.Data.DataTable.AddColumn("routerImportDT", "uploadCMD", "String", "UPLOAD")
+'	f.Data.DataTable.AddColumn("routerImportDT", "routerName", "String")
+'	f.Data.DataTable.AddColumn("routerImportDT", "routerDescription", "String")
+'	f.Data.DataTable.AddColumn("routerImportDT", "routerWeight", "String")
+'	f.Data.DataTable.AddColumn("routerImportDT", "lineType", "String")
+'	f.Data.DataTable.AddColumn("routerImportDT", "partNumber", "String")
+'	f.Data.DataTable.AddColumn("routerImportDT", "workCenter", "String")
+'	f.Data.DataTable.AddColumn("routerImportDT", "lineDescription", "String")
+'	f.Data.DataTable.AddColumn("routerImportDT", "materialWeight", "String")
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.createEmptyDts.End
+
+Program.Sub.loadGridProperties.Start
+v.Local.iCnt.Declare
+v.Local.sFields.Declare
+f.Intrinsic.Control.Try
+	f.Intrinsic.String.Split(v.DataTable.routerDisplayDT.FieldNames, "*!*", v.Local.sFields)
+	f.Intrinsic.Control.For(v.Local.iCnt, 0, v.Local.sFields.UBound, 1)
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderFontBold", True)
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "Visible", True)
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "ReadOnly", True)
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "AllowEdit", False)
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderHAlignment", "Near")
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "CellHAlignment", "Near")
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderBackColor", v.Color.GSS)
+		gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderForeColor", v.Color.White)
+	f.Intrinsic.Control.Next(v.Local.iCnt)
+	
+	'Caption
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "routerName", "Caption", "Router")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "routerDescription", "Caption", "Router Description")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "routerWeight", "Caption", "Router Weight")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "lineType", "Caption", "LMO")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "partNumber", "Caption", "Part Number")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "workCenter", "Caption", "Workcenter")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "lineDescription", "Caption", "Step Description")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "materialWeight", "Caption", "Material Weight")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "qtyRuntime", "Caption", "Qty/Runtime")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "uploadUser", "Caption", "User")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "uploadDate", "Caption", "Date")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "uploadCheck", "Caption", "Uploaded")
+	
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "uploadCheck", "Visible", False)
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "routerWeight", "CellHAlignment", "Far")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "materialWeight", "CellHAlignment", "Far")
+	gui.F_RouterImport.GsGcRouter.SetColumnProperty("routerDisplayGV", "qtyRuntime", "CellHAlignment", "Far")
+	
+	gui.F_RouterImport.GsGcRouter.SetGridviewProperty("routerDisplayGV", "OptionsViewColumnAutoWidth", False)
+	
+	Gui.F_RouterImport.GsGcRouter.BestFitColumns("routerDisplayGV")
+	
+
+	f.Intrinsic.String.Split(v.DataTable.routerNameDisplayDT.FieldNames, "*!*", v.Local.sFields)
+	f.Intrinsic.Control.For(v.Local.iCnt, 0, v.Local.sFields.UBound, 1)
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderFontBold", True)
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "Visible", True)
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "ReadOnly", True)
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "AllowEdit", False)
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderHAlignment", "Near")
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "CellHAlignment", "Near")
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderBackColor", v.Color.GSS)
+		gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", v.Local.sFields(v.Local.iCnt), "HeaderForeColor", v.Color.White)
+	f.Intrinsic.Control.Next(v.Local.iCnt)
+	
+	gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", "routerName", "Caption", "Router")
+	gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", "routerDescription", "Caption", "Router Description")
+	gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", "deleteCMD", "Caption", "Delete")
+
+	gui.F_RouterImport.GsGcRouterNames.SetColumnProperty("routerNameDisplayGV", "uploadCheck", "Visible", False)
+	
+	Gui.F_RouterImport.GsGcRouterNames.BestFitColumns("routerNameDisplayGV")
+	Gui.F_RouterImport.GsGcRouterNames.ColumnEdit("routerNameDisplayGV", "deleteCMD", "EditorButton", "Delete")
+	
+	gui.F_RouterImport.GsGcRouterNames.SetGridviewProperty("routerNameDisplayGV", "OptionsViewColumnAutoWidth", False)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.loadGridProperties.End
+
+Program.Sub.getFiles.Start
+v.Local.sFolderPath.Declare
+v.Local.sFileList.Declare
+v.Local.sFileName.Declare
+v.Local.sFileExtension.Declare
+v.Local.sText.Declare
+v.Local.sTemp.Declare
+v.Local.iCnt.Declare
+v.Local.iCntSingleRouter.Declare
+v.Local.bExist.Declare
+v.Local.sRouterName.Declare
+v.Local.sGSSRouterName.Declare
+v.Local.sFilter.Declare
+v.Local.bSave.Declare(boolean, false)
+v.Local.sSQL.Declare
+f.Intrinsic.Control.Try
+
+	f.Intrinsic.String.Build("{0}\CUSTOM\GCG_5626\ImportFolder.txt", v.Caller.GlobalDir, v.Local.sFileName)
+	f.Intrinsic.File.Exists(v.Local.sFileName, v.Local.bExist)
+	f.Intrinsic.Control.If(v.Local.bExist)
+		f.Intrinsic.File.File2String(v.Local.sFileName, v.Local.sFolderPath)
+	f.Intrinsic.Control.EndIf
+
+	f.Intrinsic.Control.If(v.Local.sFolderPath.Trim, =, "")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+
+	f.Intrinsic.File.GetFileList(v.Local.sFolderPath, v.Local.sFileList)
+	f.Intrinsic.String.Split(v.Local.sFileList, ":", v.Local.sFileList)
+	f.Intrinsic.Control.For(v.Local.iCnt, 0, v.Local.sFileList.UBound, 1)
+		f.Intrinsic.String.Build("{0}{1}", v.Local.sFolderPath, v.Local.sFileList(v.Local.iCnt), v.Local.sFileName)
+		f.Intrinsic.File.GetExtensionComponent(v.Local.sFileName, v.Local.sFileExtension)
+		f.Intrinsic.String.UCase(v.Local.sFileExtension, v.Local.sFileExtension)
+		f.Intrinsic.Control.If(v.Local.sFileExtension.Trim, =, "CSV")
+			f.Intrinsic.File.File2String(v.Local.sFileName, v.Local.sText)
+			f.Intrinsic.String.Replace(v.Local.sText, v.Ambient.NewLine, "$*$",v.Local.sText)
+			f.Intrinsic.String.Replace(v.Local.sText, v.Ambient.DBNull, " ",v.Local.sText)
+			f.Intrinsic.String.Replace(v.Local.sText, ",,", ", ,",v.Local.sText)
+			f.Data.DataTable.CreateFromString("importDT", v.Local.sText, "routerName*!*routerDescription*!*routerWeight*!*lineType*!*partNumber*!*workCenter*!*lineDescription*!*materialWeight*!*qtyRuntime", "String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String", ",", "$*$")
+			f.Data.DataTable.SetValueFormat("importDT", -1, "routerName", "routerName", ">")
+			f.Data.DataTable.SetValueFormat("importDT", -1, "lineType", "lineType", ">")
+			f.Data.DataTable.SetValueFormat("importDT", -1, "partNumber", "partNumber", ">")
+			f.Data.DataTable.SetValueFormat("importDT", -1, "workCenter", "workCenter", ">")
+			v.Local.sTemp.Set(v.DataTable.importDT(0).routerName!FieldValTrim)
+			f.Intrinsic.Control.If(v.Local.sTemp.UCase, =, "ROUTER_NAME")
+				f.Data.DataTable.DeleteRow("importDT", 0)
+				f.Data.DataTable.AcceptChanges("importDT")				
+			f.Intrinsic.Control.EndIf
+						
+			v.Local.sTemp.Set(v.DataTable.importDT(v.DataTable.importDT.RowCount--).routerName!FieldValTrim)
+			f.Intrinsic.Control.If(v.Local.sTemp.UCase, =, "")
+				f.Data.DataTable.DeleteRow("importDT", v.DataTable.importDT.RowCount--)
+				f.Data.DataTable.AcceptChanges("importDT")				
+			f.Intrinsic.Control.EndIf
+			
+			f.Data.DataView.Create("importDT", "importDV", 22)
+			f.Data.DataView.Create("importDT", "nameChckDV", 22)
+			f.Data.DataView.ToDataTableDistinct("importDT", "importDV", "routerNamesDT", "routerName")
+			
+			f.Intrinsic.Control.For(v.Local.iCntSingleRouter, 0, v.DataTable.routerNamesDT.RowCount--, 1)
+				v.Local.sRouterName.Set(v.DataTable.routerNamesDT(v.Local.iCntSingleRouter).routerName!FieldValTrim)
+				f.Intrinsic.String.Build("routerName = '{0}'", v.Local.sRouterName, v.Local.sFilter)
+				f.Data.DataView.SetFilter("importDT", "nameChckDV", v.Local.sFilter)
+				f.Data.DataView.SetFilter("routerDisplayDT", "routerCheck", v.Local.sFilter)
+				
+				f.ODBC.Connection!con.OpenCompanyConnection
+					f.Intrinsic.String.Build("Select top 1 ROUTER from V_ROUTER_HEADER where ROUTER = '{0}'", v.Local.sRouterName, v.Local.sSQL)
+					f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.sGSSRouterName)
+				f.ODBC.Connection!con.Close	
+				
+				f.Intrinsic.Control.If(v.Local.sGSSRouterName.Trim, =, "")
+					f.Intrinsic.Control.If(v.DataView.routerDisplayDT!routerCheck.RowCount, =, 0)
+						f.Intrinsic.Control.If(v.DataView.importDT!nameChckDV.RowCount, =, 2)
+							f.Data.DataView.ToDataTable("importDT", "nameChckDV", "mergeDT")
+							f.Data.DataTable.Merge("mergeDT", "routerImportDT", true, 2)
+							f.Data.DataTable.Close("mergeDT")
+'							v.Local.bSave.Set(True)
+						f.Intrinsic.Control.Else
+							f.Data.DataView.ToDataTable("importDT", "nameChckDV", "mergeDT")
+							f.Data.DataTable.Merge("mergeDT", "logErrorsDT", true, 2)
+							f.Data.DataTable.Close("mergeDT")
+						f.Intrinsic.Control.EndIf
+					f.Intrinsic.Control.Else
+						f.Data.DataView.ToDataTable("importDT", "nameChckDV", "mergeDT")
+						f.Data.DataTable.Merge("mergeDT", "logErrorsDT", true, 2)
+						f.Data.DataTable.Close("mergeDT")
+					f.Intrinsic.Control.EndIf			
+				f.Intrinsic.Control.Else
+					f.Data.DataView.ToDataTable("importDT", "nameChckDV", "mergeDT")
+					f.Data.DataTable.Merge("mergeDT", "logErrorsDT", true, 2)
+					f.Data.DataTable.Close("mergeDT")
+				f.Intrinsic.Control.EndIf			
+				
+			f.Intrinsic.Control.Next(v.Local.iCntSingleRouter)				
+			
+			f.Data.DataTable.Close("routerNamesDT")					
+			f.Data.DataTable.Close("importDT")
+		f.Intrinsic.Control.EndIf
+'		v.Local.bSave.Set(False)
+	f.Intrinsic.Control.Next(v.Local.iCnt)
+	
+	f.Data.DataTable.SetValue("routerImportDT", -1, "uploadUser", v.Caller.User, "uploadDate", v.Ambient.Date.PervasiveDate)
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Data.DataTable.SaveToDB("routerImportDT", "con", "GCG_5626_Router_Imp", "routerName*!*lineType*!*PartNumber", 256)
+	f.ODBC.Connection!con.Close	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.getFiles.End
+
+Program.Sub.refreshDTs.Start
+f.Intrinsic.Control.Try
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Data.DataTable.CreateFromSQL("tmpRouterDisplayDT", "con", "select * from GCG_5626_Router_Imp", true)
+		f.Data.DataTable.CreateFromSQL("tmpRouterImportDT", "con", "select * from GCG_5626_Router_Imp where uploadCheck = '0'", true)
+		f.Data.DataTable.CreateFromSQL("tmpRouterNameDisplayDT", "con", "select distinct routerName, routerDescription, uploadCheck from GCG_5626_Router_Imp ", true)
+	f.ODBC.Connection!con.Close
+	
+	f.Data.DataTable.DeleteRow("routerDisplayDT")
+	f.Data.DataTable.AcceptChanges("routerDisplayDT")
+	f.Data.DataTable.Merge("tmpRouterDisplayDT", "routerDisplayDT", false, 2)
+	f.Data.DataTable.Close("tmpRouterDisplayDT")
+	f.Data.DataView.SetFilter("routerDisplayDT", "routerDisplayDV", "routerName = '-1'")
+	
+	f.Data.DataTable.DeleteRow("routerImportDT")
+	f.Data.DataTable.AcceptChanges("routerImportDT")
+	f.Data.DataTable.Merge("tmpRouterImportDT", "routerImportDT", false, 2)
+	f.Data.DataTable.Close("tmpRouterImportDT")
+	
+	f.Data.DataTable.DeleteRow("routerNameDisplayDT")
+	f.Data.DataTable.AcceptChanges("routerNameDisplayDT")
+	f.Data.DataTable.Merge("tmpRouterNameDisplayDT", "routerNameDisplayDT", false, 2)
+	f.Data.DataTable.Close("tmpRouterNameDisplayDT")
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.refreshDTs.End
+
+Program.Sub.GsGcRouterNames_RowCellClick.Start
+v.Local.sColumn.Declare
+v.Local.sFilter.Declare
+v.Local.iRet.Declare
+v.Local.sRouterName.Declare
+v.Local.sSQL.Declare
+f.Intrinsic.Control.Try
+	f.Intrinsic.String.UCase(v.Args.Column, v.Local.sColumn)
+	f.Intrinsic.Control.SelectCase(v.Local.sColumn.Trim)
+		f.Intrinsic.Control.Case("DELETECMD")
+			v.Local.sRouterName.Set(v.DataTable.routerNameDisplayDT(v.Args.RowIndex).routerName!FieldValTrim)
+			f.Intrinsic.UI.Msgbox("Do you wish to delete this router data?", "Delete router import record", 3, v.Local.iRet)
+			f.Intrinsic.Control.If(v.Local.iRet.Trim, =, 6)
+				f.Intrinsic.String.Build("Delete from GCG_5626_Router_Imp where routerName = '{0}'", v.Local.sRouterName, v.Local.sSQL)
+				f.ODBC.Connection!con.OpenCompanyConnection
+					f.ODBC.Connection!con.Execute(v.Local.sSQL)
+				f.ODBC.Connection!con.Close
+				f.Data.DataTable.DeleteRow("routerNamesDT", v.Args.RowIndex)
+			f.Intrinsic.Control.EndIf
+			
+		f.Intrinsic.Control.CaseElse
+			v.Local.sRouterName.Set(v.DataTable.routerNameDisplayDT(v.Args.RowIndex).routerName!FieldValTrim)
+			f.Intrinsic.String.Build("routerName = '{0}'", v.Local.sRouterName, v.Local.sFilter)
+			f.Data.DataView.SetFilter("routerDisplayDT", "routerDisplayDV", v.Local.sFilter)
+			f.Data.DataView.SetSort("routerDisplayDT", "routerDisplayDV", "lineType desc")
+	f.Intrinsic.Control.EndSelect
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.GsGcRouterNames_RowCellClick.End
+
+Program.Sub.GsGcRouter_RowCellClick.Start
+f.Intrinsic.Control.Try
+'Try something
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.GsGcRouter_RowCellClick.End
+
+Program.Sub.cmdCreateSingleRouter_Click.Start
+v.Local.iRowCount.Declare
+v.Local.sRouterName.Declare
+f.Intrinsic.Control.Try
+	v.Local.iRowCount.Set(v.DataView.routerDisplayDT!routerDisplayDV.RowCount)
+	f.Intrinsic.Control.If(v.Local.iRowCount, =, 2)
+		gui.F_RouterImport..Enabled(False)
+		v.Local.sRouterName.Set(v.DataView.routerDisplayDT!routerDisplayDV(0).RouterName!FieldValTrim)
+		f.Intrinsic.Control.CallSub(createRouter, passedRouter, v.Local.sRouterName)
+		f.Intrinsic.Control.CallSub(refreshDTs)
+		gui.F_RouterImport..Enabled(True)
+	f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdCreateSingleRouter_Click.End
+
+Program.Sub.cmdCreateAllRouters_Click.Start
+v.Local.iCnt.Declare
+v.Local.sRouterName.Declare
+f.Intrinsic.Control.Try
+	gui.F_RouterImport..Enabled(False)
+	f.Data.DataView.Create("routerNameDisplayDT", "notImportedRoutersDV", 22, "uploadCheck = 'False'", "")
+	f.Intrinsic.Control.For(v.Local.iCnt, 0, v.DataView.routerNameDisplayDT!notImportedRoutersDV.RowCount--, 1)
+		v.Local.sRouterName.Set(v.DataView.routerNameDisplayDT!notImportedRoutersDV(v.Local.iCnt).routerName!FieldValTrim)
+		f.Intrinsic.Control.CallSub(createRouter, passedRouter, v.Local.sRouterName)
+	f.Intrinsic.Control.Next(v.Local.iCnt)
+	f.Data.DataView.Close("routerNameDisplayDT", "notImportedRoutersDV")
+	f.Intrinsic.Control.CallSub(refreshDTs)
+	gui.F_RouterImport..Enabled(True)
+f.Intrinsic.Control.Catch
+	gui.F_RouterImport..Enabled(True)
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdCreateAllRouters_Click.End
+
+Program.Sub.createRouter.Start
+v.Local.sRouterName.Declare
+v.Local.sRouterDescription.Declare
+v.Local.sRouterWeight.Declare
+v.Local.sLineType.Declare
+v.Local.sPartNumber.Declare
+v.Local.sWorkcenter.Declare
+v.Local.sLineLDescription.Declare
+v.Local.sLineMDescription.Declare
+v.Local.sWeightPart.Declare
+v.Local.sQty.Declare
+v.Local.sRuntime.Declare
+
+v.Local.sFilter.Declare
+v.Local.sSQL.Declare
+v.Local.sTemp.Declare
+v.Local.sDecimalTemp.Declare
+v.Local.sDecimalTemp.Redim(0, 1)
+
+v.Local.sFileText.Declare
+v.Local.sFilePath.Declare
+
+v.Local.sLine1.Declare
+v.Local.sLine2.Declare
+v.Local.sFiller.Declare
+v.Local.sFiller2.Declare
+v.Local.sRet.Declare
+v.Local.iTempMult.Declare
+v.Local.sSeq.Declare
+v.Local.fTempDecimal.Declare
+v.Local.bIsNumeric.Declare
+f.Intrinsic.Control.Try
+	v.Local.sRouterName.Set(v.Args.passedRouter)
+	f.Intrinsic.String.Build("routerName = '{0}'", v.Local.sRouterName, v.Local.sFilter)
+	f.Data.DataView.Create("routerDisplayDT", "singleRouterDV", 22, v.Local.sFilter, "")
+	f.Intrinsic.Control.If(v.DataView.routerDisplayDT!singleRouterDV.RowCount, <>, 2)
+		f.Data.DataView.Close("routerDisplayDT", "singleRouterDV")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	v.Local.sRouterDescription.Set(v.DataView.routerDisplayDT!singleRouterDV(0).routerDescription!FieldValTrim)
+	v.Local.sRouterWeight.Set(v.DataView.routerDisplayDT!singleRouterDV(0).routerWeight!FieldValTrim)
+	f.Intrinsic.String.Build("routerName = '{0}' and lineType = 'M'", v.Local.sRouterName, v.Local.sFilter)
+	f.Data.DataView.Create("routerDisplayDT", "singleLineDV", 22, v.Local.sFilter, "")
+	f.Intrinsic.Control.If(v.DataView.routerDisplayDT!singleLineDV.RowCount, =, 0)
+		f.Intrinsic.UI.Msgbox("Error in Line M.")
+		gui.F_RouterImport..Enabled(True)
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf	
+	v.Local.sPartNumber.Set(v.DataView.routerDisplayDT!singleLineDV(0).partNumber!FieldValTrim)
+	v.Local.sLineMDescription.Set(v.DataView.routerDisplayDT!singleLineDV(0).lineDescription!FieldValTrim)
+	v.Local.sWeightPart.Set(v.DataView.routerDisplayDT!singleLineDV(0).materialWeight!FieldValTrim)
+	v.Local.sQty.Set(v.DataView.routerDisplayDT!singleLineDV(0).qtyRuntime!FieldValTrim)
+	
+	f.Intrinsic.String.Build("routerName = '{0}' and lineType = 'L'", v.Local.sRouterName, v.Local.sFilter)
+	f.Data.DataView.SetFilter("routerDisplayDT", "singleLineDV", v.Local.sFilter)
+	f.Intrinsic.Control.If(v.DataView.routerDisplayDT!singleLineDV.RowCount, =, 0)
+		f.Intrinsic.UI.Msgbox("Error in Line L.")
+		gui.F_RouterImport..Enabled(True)
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	v.Local.sWorkcenter.Set(v.DataView.routerDisplayDT!singleLineDV(0).workCenter!FieldValTrim)
+	v.Local.sLineLDescription.Set(v.DataView.routerDisplayDT!singleLineDV(0).lineDescription!FieldValTrim)
+	v.Local.sRuntime.Set(v.DataView.routerDisplayDT!singleLineDV(0).qtyRuntime!FieldValTrim)
+	
+	'Ucase
+	f.Intrinsic.String.UCase(v.Local.sRouterName, v.Local.sRouterName)
+	f.Intrinsic.String.UCase(v.Local.sPartNumber, v.Local.sPartNumber)
+	f.Intrinsic.String.UCase(v.Local.sWorkcenter, v.Local.sWorkcenter)
+	
+	'Check Material Exists.
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Intrinsic.String.Build("Select top 1 Router from V_Router_Header where Router = '{0}'", v.Local.sRouterName, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.sTemp)
+	f.ODBC.Connection!con.Close
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, <>, "")
+		f.Intrinsic.UI.Msgbox("This router already exists.")
+		f.ODBC.Connection!con.OpenCompanyConnection
+			f.Intrinsic.String.Build("Update GCG_5626_Router_Imp Set uploadCheck = '1' Where routerName = '{0}'", v.Local.sRouterName.Trim, v.Local.sSQL)
+			f.ODBC.Connection!con.Execute(v.Local.sSQL)
+		f.ODBC.Connection!con.Close
+		f.Intrinsic.Control.CallSub(refreshDTs)
+		gui.F_RouterImport..Enabled(True)
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf	
+	
+	'Check Material Exists.
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Intrinsic.String.Build("Select top 1 Part from V_Inventory_Mstr where Part = '{0}'", v.Local.sPartNumber, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.sTemp)
+	f.ODBC.Connection!con.Close
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+		f.Intrinsic.String.RPad(v.Local.sPartNumber, " ", 558, v.Local.sPartNumber)
+		f.Intrinsic.Control.If(v.Local.sWeightPart.IsNumeric)
+			v.Local.fTempDecimal.Set(v.Local.sWeightPart)
+			f.Intrinsic.Math.Round(v.Local.fTempDecimal, 4, v.Local.fTempDecimal)
+			v.Local.sWeightPart.Set(v.Local.fTempDecimal)
+		f.Intrinsic.Control.EndIf
+		'Weight
+		f.Intrinsic.String.Split(v.Local.sWeightPart, ".", v.Local.sDecimalTemp)
+		f.Intrinsic.String.LPad(v.Local.sDecimalTemp(0).Trim, " ", 11, v.Local.sDecimalTemp(0))
+		f.Intrinsic.Control.If(v.Local.sDecimalTemp(1).Trim, =, "OOB")
+			v.Local.sDecimalTemp.RedimPreserve(0, 1)
+			v.Local.sDecimalTemp(1).Set("0")
+		f.Intrinsic.Control.EndIf
+		f.Intrinsic.String.RPad(v.Local.sDecimalTemp(1).Trim, "0", 4, v.Local.sDecimalTemp(1))
+		f.Intrinsic.String.Build("{0}.{1}", v.Local.sDecimalTemp(0), v.Local.sDecimalTemp(1), v.Local.sWeightPart)
+		f.Intrinsic.String.Build("{0}{1}", v.Local.sPartNumber, v.Local.sWeightPart, v.Local.sFileText)
+		f.Intrinsic.String.Build("{0}\INV.TXT", v.Caller.FilesDir, v.Local.sFilePath)
+		f.Intrinsic.File.String2File(v.Local.sFilePath, v.Local.sFileText)
+
+		f.Global.General.CallWrapperSync(50, "UPLINV/U")
+	f.Intrinsic.Control.EndIf
+	
+	'Check Workcenter Exists.
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Intrinsic.String.Build("Select top 1 Machine from WORKCENTERS where Machine = '{0}'", v.Local.sWorkcenter, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.sTemp)
+	f.ODBC.Connection!con.Close
+
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+		f.Intrinsic.String.Left(v.Local.sWorkcenter, 4, v.Local.sWorkcenter)
+		f.Intrinsic.String.RPad(v.Local.sWorkcenter, " ", 4, v.Local.sWorkcenter)
+		f.Intrinsic.String.Build("{0}Workcenter Created By Nesting ", v.Local.sWorkcenter, v.Local.sWeightPart, v.Local.sFileText)
+		f.Intrinsic.String.Build("{0}\WORKCENR.TXT", v.Caller.FilesDir, v.Local.sFilePath)
+		f.Intrinsic.File.String2File(v.Local.sFilePath, v.Local.sFileText)
+
+		f.Global.General.CallWrapperSync(50, "UPLWRKCN/U")
+	f.Intrinsic.Control.EndIf
+	
+	'Check Router Part Number Exists.
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Intrinsic.String.Build("Select top 1 Part from V_Inventory_Mstr where Part = '{0}'", v.Local.sRouterName, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.sTemp)
+	f.ODBC.Connection!con.Close
+
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, =, "")
+		f.Intrinsic.String.RPad(v.Local.sRouterName, " ", 31, v.Local.sRouterName)
+		f.Intrinsic.String.RPad(v.Local.sRouterDescription, " ", 526, v.Local.sRouterDescription)
+		'Weight
+		f.Intrinsic.Control.If(v.Local.sWeightPart.IsNumeric)
+			v.Local.fTempDecimal.Set(v.Local.sWeightPart)
+			f.Intrinsic.Math.Round(v.Local.fTempDecimal, 4, v.Local.fTempDecimal)
+			v.Local.sWeightPart.Set(v.Local.fTempDecimal)
+		f.Intrinsic.Control.EndIf
+		
+		f.Intrinsic.String.Split(v.Local.sRouterWeight, ".", v.Local.sDecimalTemp)
+		f.Intrinsic.String.LPad(v.Local.sDecimalTemp(0).Trim, " ", 11, v.Local.sDecimalTemp(0))
+		f.Intrinsic.Control.If(v.Local.sDecimalTemp(1).Trim, =, "OOB")
+			v.Local.sDecimalTemp.RedimPreserve(0, 1)
+			v.Local.sDecimalTemp(1).Set("0")
+		f.Intrinsic.Control.EndIf
+		f.Intrinsic.String.RPad(v.Local.sDecimalTemp(1).Trim, "0", 4, v.Local.sDecimalTemp(1))
+		f.Intrinsic.String.Build("{0}.{1}", v.Local.sDecimalTemp(0), v.Local.sDecimalTemp(1), v.Local.sRouterWeight)
+		f.Intrinsic.String.Build("{0}{1}{2}", v.Local.sRouterName, v.Local.sRouterDescription, v.Local.sRouterWeight, v.Local.sFileText)
+		f.Intrinsic.String.Build("{0}\INV.TXT", v.Caller.FilesDir, v.Local.sFilePath)
+		f.Intrinsic.File.String2File(v.Local.sFilePath, v.Local.sFileText)
+
+		f.Global.General.CallWrapperSync(50, "UPLINV/U")
+	f.Intrinsic.Control.EndIf
+	
+	'Build Router
+	
+	Function.Global.General.ReadOption("401113", 3, "", 0, v.Local.iTempMult)
+	f.Intrinsic.String.LPad(v.Local.iTempMult.String, "0", 6, v.Local.sSeq)	
+	f.Data.DataTable.AddRow("6021", "RouterNum", v.Local.sRouterName, "RouterDesc", v.Local.sRouterDescription, "Seq", v.Local.sSeq, "LineType", "M", "PartNum", v.Local.sPartNumber, "PartStepDesc", v.Local.sLineMDescription, "RunTimeMatlQty", v.Local.sQty)
+	
+	f.Intrinsic.Math.Mult(v.Local.iTempMult, 2, v.Local.iTempMult)
+	f.Intrinsic.String.LPad(v.Local.iTempMult.String, "0", 6, v.Local.sSeq)	
+	f.Data.DataTable.AddRow("6021", "RouterNum", v.Local.sRouterName, "RouterDesc", v.Local.sRouterDescription, "Seq", v.Local.sSeq, "LineType", "L", "WC", v.Local.sWorkcenter, "PartStepDesc", v.Local.sLineLDescription, "RunTimeMatlQty", v.Local.sRuntime)
+	
+	f.Intrinsic.Control.CallSub(6021Sync)
+	
+	f.Data.DataTable.DeleteRow("6021")
+	f.Data.DataTable.AcceptChanges("6021")
+	
+''''	f.Intrinsic.String.Left(v.Local.sRouterName, 20, v.Local.sRouterName)
+''''	f.Intrinsic.String.RPad(v.Local.sRouterName, " ", 20, v.Local.sRouterName)
+''''	f.Intrinsic.String.Left(v.Local.sRouterDescription, 30, v.Local.sRouterDescription)
+''''	f.Intrinsic.String.RPad(v.Local.sRouterDescription, " ", 30, v.Local.sRouterDescription)
+''''	'Check Part texts.
+''''	f.Intrinsic.String.Left(v.Local.sPartNumber, 20, v.Local.sPartNumber)
+''''	f.Intrinsic.String.RPad(v.Local.sPartNumber, " ", 20, v.Local.sPartNumber)
+''''	f.Intrinsic.String.Left(v.Local.sLineMDescription, 30, v.Local.sLineMDescription)
+''''	f.Intrinsic.String.RPad(v.Local.sLineMDescription, " ", 30, v.Local.sLineMDescription)
+''''	f.Intrinsic.String.Left(v.Local.sQty, 16, v.Local.sQty)
+''''	f.Intrinsic.String.LPad(v.Local.sQty, " ", 16, v.Local.sQty)
+''''	
+''''	v.Local.sFiller.Set("")
+''''	f.Intrinsic.String.RPad(v.Local.sFiller, " ", 16, v.Local.sFiller)	
+''''	
+''''	f.Intrinsic.String.Build("{0}{1}000100M{2}    {3}{4}{5}", v.Local.sRouterName, v.Local.sRouterDescription, v.Local.sPartNumber, v.Local.sLineMDescription, v.Local.sFiller, v.Local.sQty, v.Local.sLine1)
+''''	
+''''	'Check Labor texts
+''''	f.Intrinsic.String.Left(v.Local.sWorkcenter, 4, v.Local.sWorkcenter)
+''''	f.Intrinsic.String.RPad(v.Local.sWorkcenter, " ", 4, v.Local.sWorkcenter)
+''''	f.Intrinsic.String.Left(v.Local.sLineLDescription, 30, v.Local.sLineLDescription)
+''''	f.Intrinsic.String.RPad(v.Local.sLineLDescription, " ", 30, v.Local.sLineLDescription)
+''''	f.Intrinsic.String.Left(v.Local.sRuntime, 16, v.Local.sRuntime)
+''''	f.Intrinsic.String.LPad(v.Local.sRuntime, " ", 16, v.Local.sRuntime)
+''''	
+''''	v.Local.sFiller.Set("")
+''''	f.Intrinsic.String.RPad(v.Local.sFiller, " ", 20, v.Local.sFiller)	
+''''	v.Local.sFiller2.Set("")
+''''	f.Intrinsic.String.RPad(v.Local.sFiller2, " ", 16, v.Local.sFiller2)	
+''''	
+''''	f.Intrinsic.String.Build("{0}{1}000200L{2}{3}{4}{5}", v.Local.sRouterName, v.Local.sRouterDescription, v.Local.sFiller, v.Local.sWorkcenter, v.Local.sLineLDescription, v.Local.sFiller2, v.Local.sRuntime, v.Local.sLine2)
+''''	
+''''	'Build Text
+''''	f.Intrinsic.String.Build("{0}{1}{2}", v.Local.sLine1, v.Ambient.NewLine, v.Local.sLine2, v.Local.sFileText)
+''''	f.Intrinsic.String.Build("{0}\ROUTERHD.TXT", v.Caller.FilesDir, v.Local.sFilePath)
+''''	f.Intrinsic.File.String2File(v.Local.sFilePath, v.Local.sFileText)
+''''	
+''''	f.Global.General.CallWrapperSync(50, "UPLRTRH")
+	
+	'check it was created/
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Intrinsic.String.Build("Select top 1 Router from V_Router_Header where Router = '{0}'", v.Local.sRouterName.Trim, v.Local.sSQL)
+		f.ODBC.Connection!con.ExecuteAndReturn(v.Local.sSQL, v.Local.sTemp)
+	f.ODBC.Connection!con.Close
+	
+	f.Intrinsic.Control.If(v.Local.sTemp.Trim, <>, "")
+		f.ODBC.Connection!con.OpenCompanyConnection
+			f.Intrinsic.String.Build("Update GCG_5626_Router_Imp Set uploadCheck = '1' Where routerName = '{0}'", v.Local.sRouterName.Trim, v.Local.sSQL)
+			f.ODBC.Connection!con.Execute(v.Local.sSQL)
+		f.ODBC.Connection!con.Close
+	f.Intrinsic.Control.EndIf
+	
+	f.Data.DataView.Close("routerDisplayDT", "singleLineDV")
+	f.Data.DataView.Close("routerDisplayDT", "singleRouterDV")
+
+f.Intrinsic.Control.Catch
+	gui.F_RouterImport..Enabled(True)
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.createRouter.End
+
+Program.Sub.optImport_Click.Start
+f.Intrinsic.Control.Try
+	f.Data.DataView.SetFilter("routerDisplayDT", "routerDisplayDV", "routerName = '-1'")
+	f.Data.DataView.SetFilter("routerNameDisplayDT", "routerNameDisplayDV", "uploadCheck = 'False'")
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.optImport_Click.End
+
+Program.Sub.optShow_Click.Start
+f.Intrinsic.Control.Try
+	f.Data.DataView.SetFilter("routerDisplayDT", "routerDisplayDV", "")
+	f.Data.DataView.SetSort("routerDisplayDT", "routerDisplayDV", "routerName")
+	f.Data.DataView.SetFilter("routerNameDisplayDT", "routerNameDisplayDV", "")
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.optShow_Click.End
+
+Program.Sub.cmdRefresh_Click.Start
+f.Intrinsic.Control.Try
+	gui.F_RouterImport..Enabled(False)
+	f.Intrinsic.Control.CallSub(getFiles)
+	f.Intrinsic.Control.CallSub(refreshDTs)
+	gui.F_RouterImport..Enabled(True)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdRefresh_Click.End
+
+Program.Sub.cmdImportBrw_Click.Start
+v.Local.sRet.Declare
+f.Intrinsic.Control.Try
+	f.Intrinsic.UI.FolderBrowser("Select an import folder", , v.Local.sRet)
+	f.Intrinsic.Control.If(v.Local.sRet.Trim, <>, "***CANCEL***")
+		f.Intrinsic.String.Build("{0}\", v.Local.sRet.Trim, v.Local.sRet)
+		gui.F_RouterImport.txtImportFolder.Text(v.Local.sRet.Trim)
+	f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdImportBrw_Click.End
+
+Program.Sub.cmdSaveImport_Click.Start
+v.Local.sFile.Declare
+v.Local.sText.Declare
+v.Local.sTemp.Declare
+f.Intrinsic.Control.Try
+	v.Local.sText.Set(v.Screen.F_RouterImport!txtImportFolder.Text)
+	f.Intrinsic.String.Build("{0}\CUSTOM\GCG_5626\ImportFolder.txt", v.Caller.GlobalDir, v.Local.sFile)
+	f.Intrinsic.String.Right(v.Local.sText, 1, v.Local.sTemp)
+	f.Intrinsic.Control.If(v.Local.sTemp, <>, "\")
+		f.Intrinsic.String.Build("{0}\", v.Local.sText, v.Local.sText)
+	f.Intrinsic.Control.EndIf
+	f.Intrinsic.File.String2File(v.Local.sFile, v.Local.sText)
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.cmdSaveImport_Click.End
+
+Program.Sub.F_RouterImport_UnLoad.Start
+f.Intrinsic.Control.Try
+	f.Intrinsic.Control.End
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(ErrorMsg, CurrentSub, v.Ambient.CurrentSubroutine)
+f.Intrinsic.Control.EndTry
+Program.Sub.F_RouterImport_UnLoad.End
+
+
